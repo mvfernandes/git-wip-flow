@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fluxo Git: Checkpoints Imutáveis e WIP - Definitivo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0a0a0f; --card:#14141f; --blue:#1890ff; --green:#52c41a; --orange:#fa8c16; --border:rgba(255,255,255,0.08); }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:#fff;font-family:'Inter',sans-serif;line-height:1.6;antialiased}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 32px}
+  header{border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,10,15,0.8);backdrop-filter:blur(20px);z-index:10}
+  header .wrap{height:64px;display:flex;align-items:center;justify-content:space-between}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:500;border:1px solid}
+  .badge-blue{background:rgba(24,144,255,0.1);border-color:rgba(24,144,255,0.2);color:var(--blue)}
+  .badge-green{background:rgba(82,196,26,0.1);border-color:rgba(82,196,26,0.2);color:var(--green)}
+  .badge-orange{background:rgba(250,140,22,0.1);border-color:rgba(250,140,22,0.2);color:var(--orange)}
+  h1{font-size:48px;line-height:0.95;letter-spacing:-0.03em;font-weight:800;margin:24px 0 16px;max-width:800px}
+  .grad{background:linear-gradient(90deg,var(--blue),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .lead{font-size:18px;color:rgba(255,255,255,0.6);max-width:720px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:28px 0}
+  .card{border:1px solid var(--border);background:rgba(255,255,255,0.03);border-radius:12px;padding:16px}
+  .card h3{font-size:13px;font-weight:700;margin-bottom:6px}
+  .card p{font-size:13px;color:rgba(255,255,255,0.55)}
+  /* Diagram */
+  .diagram{display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;gap:0;align-items:start;margin:32px 0}
+  .dia-box{border-radius:16px;padding:20px;border-width:2px;border-style:solid}
+  .dia-box h4{font-size:12px;letter-spacing:0.08em;text-transform:uppercase;font-weight:800;margin-bottom:12px}
+  .dia-step{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;margin:8px 0}
+  .arrow{font-size:24px;color:rgba(255,255,255,0.3);text-align:center;padding-top:80px}
+  /* Code */
+  pre{background:#14141f;border:1px solid var(--border);border-radius:12px;padding:16px;overflow:auto;font-size:13px;line-height:1.7}
+  pre code{font-family:'JetBrains Mono',monospace}
+  .code-head{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-bottom:0;border-radius:12px 12px 0 0;padding:10px 16px;font-size:11px;color:rgba(255,255,255,0.4)}
+  .code-head + pre{border-radius:0 0 12px 12px}
+  button.copy{background:rgba(255,255,255,0.06);border:1px solid var(--border);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer}
+  section{padding:40px 0;border-top:1px solid rgba(255,255,255,0.04)}
+  h2{font-size:26px;font-weight:700;letter-spacing:-0.02em;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+  h2 .bar{width:4px;height:24px;background:var(--blue);border-radius:999px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;text-align:left;padding:12px 16px;border-bottom:1px solid var(--border)}
+  td{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.04)}
+  .ok{color:var(--green)}
+  @media(max-width:900px){.grid3{grid-template-columns:1fr}.diagram{grid-template-columns:1fr}.arrow{transform:rotate(90deg);padding:12px 0}h1{font-size:32px}}
+</style>
+</head>
+<body>
+
+<div class="wrap" style="padding-top:56px;padding-bottom:24px">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-blue">🔒 Imutável & Seguro</span>
+    <span class="badge badge-green">👁 Revisão Visual</span>
+    <span class="badge badge-orange">✨ PR Cirúrgico</span>
+  </div>
+
+  <h1>Fluxo Git: <span class="grad">Checkpoints Imutáveis</span> e Branching com Sufixo WIP</h1>
+  <p class="lead">Guia definitivo focado em <b style="color:#fff">segurança absoluta contra perda de dados</b>, revisão visual na IDE e histórico cirúrgico para PRs. Sem --force, sem acúmulo de lixo.</p>
+
+  <div class="grid3">
+    <div class="card">
+      <h3>📅 Convenção .wip-{data}</h3>
+      <p>Qualquer dev ou CI reconhece que <code class="mono">feature.wip-2026-09-25</code> é backup, não release.</p>
+    </div>
+    <div class="card">
+      <h3>🗑 Limpeza Contínua</h3>
+      <p>Branches antigas apagadas diariamente local e remoto. Sempre 1 WIP ativa.</p>
+    </div>
+    <div class="card">
+      <h3>🔒 Snapshot Único</h3>
+      <p>Zero poluição. Repositório nunca acumula branches órfãs.</p>
+    </div>
+  </div>
+
+  <!-- DIAGRAMA -->
+  <div class="diagram">
+    <div class="dia-box" style="background:#e6f7ff14;border-color:#1890ff55">
+      <h4 style="color:#1890ff">📅 DIA 1 — Inicial</h4>
+      <div class="dia-step">Criar branch: feature.wip-2026-09-24</div>
+      <div class="dia-step">Desenvolver e testar</div>
+      <div class="dia-step" style="background:#1890ff22;border-color:#1890ff44">Commit e Push (Backup nuvem)</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="dia-box" style="background:#f6ffed14;border-color:#52c41a55">
+      <h4 style="color:#52c41a">📅 DIA 2 — Continuação</h4>
+      <div class="dia-step">Criar nova branch da dev: .wip-2026-09-25</div>
+      <div class="dia-step" style="background:#52c41a22;border-color:#52c41a44"><b>git merge --squash --no-commit wip-24</b><br>→ traz pra Staged</div>
+      <div class="dia-step">Desenvolver na IDE</div>
+      <div class="dia-step">Push novo backup + 🗑 apagar wip-24</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="dia-box" style="background:#fff7e614;border-color:#fa8c1655">
+      <h4 style="color:#fa8c16">🏁 ENTREGA FINAL — PR</h4>
+      <div class="dia-step">Criar branch definitiva: feature-conciliacao</div>
+      <div class="dia-step" style="background:#fa8c1622;border-color:#fa8c1644">git merge --squash --no-commit wip-25</div>
+      <div class="dia-step">Revisão visual linha a linha</div>
+      <div class="dia-step">Commit único + PR + 🗑 apagar último WIP</div>
+    </div>
+  </div>
+
+  <section>
+    <h2><span class="bar"></span> Passo a Passo Prático</h2>
+
+    <h3 style="margin:20px 0 12px">Passo 1: Snapshot do Dia 1</h3>
+    <div class="code-head"><span class="mono">bash</span><button class="copy" onclick="navigator.clipboard.writeText(this.parentElement.nextElementSibling.innerText)">Copiar</button></div>
+    <pre><code># 1. Cria e acessa a branch com sufixo do dia
+git checkout -b feature-conciliacao.wip-2026-09-24
+
+# 2. Adiciona tudo e commita
+git add .
+git commit -m "wip: conciliacao inicial com paineis e filtros"
+
+# 3. Envia para o remote (backup seguro garantido!)
+git push origin feature-conciliacao.wip-2026-09-24</code></pre>
+
+    <h3 style="margin:28px 0 12px">Passo 2: Novo Dia — O pulo do gato</h3>
+    <div class="code-head"><span class="mono">bash — método definitivo</span><button class="copy" onclick="navigator.clipboard.writeText(this.parentElement.nextElementSibling.innerText)">Copiar</button></div>
+    <pre><code># 1. Atualiza sua development local
+git checkout development
+git pull origin development
+
+# 2. Cria a nova branch para o trabalho de hoje
+git checkout -b feature-conciliacao.wip-2026-09-25
+
+# 3. O PULO DO GATO: importa o snapshot anterior direto para Staged
+git merge --squash --no-commit feature-conciliacao.wip-2026-09-24
+
+# 4. Conferência obrigatória
+git diff --cached --stat
+# deve listar só arquivos da sua feature!</code></pre>
+
+    <div class="card" style="margin:16px 0;border-color:#fa8c1644;background:#fa8c1614">
+      <h3>⚠ Por que não usar checkout -- . ?</h3>
+      <p>Ele copia a árvore inteira da WIP antiga por cima da development nova. Arquivos que outras pessoas alteraram voltam para versão antiga sem aviso. Use sempre <code class="mono">merge --squash --no-commit</code> que faz merge de 3 vias e mostra conflito.</p>
+    </div>
+
+    <div class="card" style="margin:16px 0">
+      <h3>💡 Se a WIP anterior só existe no remoto</h3>
+      <p class="mono" style="font-size:12px">git fetch origin<br>git merge --squash --no-commit origin/feature-conciliacao.wip-2026-09-24</p>
+    </div>
+
+    <h3 style="margin:28px 0 12px">Passo 3: Salvar hoje e apagar ontem</h3>
+    <div class="code-head"><span class="mono">bash</span><button class="copy" onclick="navigator.clipboard.writeText(this.parentElement.nextElementSibling.innerText)">Copiar</button></div>
+    <pre><code>git add .
+git commit -m "wip: responsividade e botoes delphi ajustados"
+git push origin feature-conciliacao.wip-2026-09-25
+
+# LIMPEZA DIÁRIA - apaga no remoto primeiro (mais seguro)
+git push origin --delete feature-conciliacao.wip-2026-09-24
+git branch -D feature-conciliacao.wip-2026-09-24</code></pre>
+
+    <h3 style="margin:28px 0 12px">Passo 4: Branch oficial para PR</h3>
+    <div class="code-head"><span class="mono">bash</span><button class="copy" onclick="navigator.clipboard.writeText(this.parentElement.nextElementSibling.innerText)">Copiar</button></div>
+    <pre><code>git checkout development
+git pull origin development
+
+git checkout -b feature-conciliacao
+git merge --squash --no-commit feature-conciliacao.wip-2026-09-25
+
+# Revisão visual final no Source Control da IDE!
+git commit -m "feat(conciliacao): implementa tela de conciliacao bancaria paritaria ao delphi"
+git push origin feature-conciliacao
+
+# LIMPEZA FINAL
+git push origin --delete feature-conciliacao.wip-2026-09-25
+git branch -D feature-conciliacao.wip-2026-09-25</code></pre>
+  </section>
+
+  <section>
+    <h2><span class="bar" style="background:var(--orange)"></span> Resumo em 3 Comandos Diários</h2>
+    <div class="grid3">
+      <div class="card" style="border-color:#1890ff44;background:#1890ff0f">
+        <h3>1 — Iniciar Dia</h3>
+        <pre style="margin-top:8px;font-size:11px"><code>git checkout -b feature.wip-HOJE \
+&& git merge --squash --no-commit \
+   feature.wip-ONTEM</code></pre>
+      </div>
+      <div class="card" style="border-color:#52c41a44;background:#52c41a0f">
+        <h3>2 — Encerrar Dia</h3>
+        <pre style="margin-top:8px;font-size:11px"><code>git add . \
+&& git commit -m "wip: ..." \
+&& git push origin feature.wip-HOJE</code></pre>
+      </div>
+      <div class="card" style="border-color:#fa8c1644;background:#fa8c160f">
+        <h3>3 — Eliminar Ontem</h3>
+        <pre style="margin-top:8px;font-size:11px"><code>git push origin --delete \
+   feature.wip-ONTEM \
+&& git branch -D feature.wip-ONTEM</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <footer style="padding:32px 0;border-top:1px solid var(--border);display:flex;justify-content:space-between;color:rgba(255,255,255,0.3);font-size:11px" class="mono">
+    <span>FLUXO WIP</span>
+    <span>PT-BR</span>
+  </footer>
+</div>
+
+</body>
+</html>
